@@ -71,8 +71,7 @@ body {
 #canvas {
   flex: 1;
   position: relative;
-  background:
-    linear-gradient(#1a1a22 1px, transparent 1px),
+  background: linear-gradient(#1a1a22 1px, transparent 1px),
     linear-gradient(90deg, #1a1a22 1px, transparent 1px);
   background-size: 20px 20px;
   background-color: #101014;
@@ -120,10 +119,26 @@ body {
   position: absolute;
 }
 
-.resize-handle.tl { top: -4px; left: -4px; cursor: nwse-resize; }
-.resize-handle.tr { top: -4px; right: -4px; cursor: nesw-resize; }
-.resize-handle.bl { bottom: -4px; left: -4px; cursor: nesw-resize; }
-.resize-handle.br { bottom: -4px; right: -4px; cursor: nwse-resize; }
+.resize-handle.tl {
+  top: -4px;
+  left: -4px;
+  cursor: nwse-resize;
+}
+.resize-handle.tr {
+  top: -4px;
+  right: -4px;
+  cursor: nesw-resize;
+}
+.resize-handle.bl {
+  bottom: -4px;
+  left: -4px;
+  cursor: nesw-resize;
+}
+.resize-handle.br {
+  bottom: -4px;
+  right: -4px;
+  cursor: nwse-resize;
+}
 
 /* ===== Layers List ===== */
 #layers-list {
@@ -142,4 +157,12 @@ body {
 #layers-list li.active {
   background: #2f80ed;
   color: white;
+}
+
+.canvas-element .resize-handle {
+  display: none;
+}
+
+.canvas-element.selected .resize-handle {
+  display: block;
 }

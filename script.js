@@ -2,6 +2,8 @@ let idCounter = 0;
 let isDragging = false;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
+let isResizing = false;
+let resizeDirection = null;
 
 // CENTRAL STATE
 const state = {
@@ -25,15 +27,17 @@ function renderElement(el) {
   div.dataset.id = el.id;
 
   div.addEventListener("mousedown", (e) => {
+    if (e.target.classList.contains("resize-handle")) return;
+
     e.stopPropagation();
     selectElement(el.id);
 
     isDragging = true;
-
     dragOffsetX = e.offsetX;
     dragOffsetY = e.offsetY;
   });
 
+  // styles
   div.style.left = el.x + "px";
   div.style.top = el.y + "px";
   div.style.width = el.width + "px";
@@ -48,11 +52,27 @@ function renderElement(el) {
     div.style.alignItems = "center";
     div.style.justifyContent = "center";
     div.style.color = "#fff";
-    div.style.fontSize = "14px";
   }
+
+  // 🔹 RESIZE HANDLES
+  ["tl", "tr", "bl", "br"].forEach((dir) => {
+    const handle = document.createElement("div");
+    handle.classList.add("resize-handle", dir);
+
+    handle.addEventListener("mousedown", (e) => {
+      e.stopPropagation();
+      selectElement(el.id);
+
+      isResizing = true;
+      resizeDirection = dir;
+    });
+
+    div.appendChild(handle);
+  });
 
   canvas.appendChild(div);
 }
+
 
 addRectBtn.addEventListener("click", () => {
   const element = {
@@ -110,41 +130,78 @@ function selectElement(id) {
 
 //Click to Canvas (DESELECT)
 
-canvas.addEventListener("click", () => {
+canvas.addEventListener("mousedown", (e) => {
+  if (e.target !== canvas) return;
   clearSelection();
 });
 
-document.addEventListener("mousemove", (e) => {
-  if (!isDragging || !state.selectedId) return;
 
-  const elData = state.elements.find(
-    (item) => item.id === state.selectedId
-  );
+document.addEventListener("mousemove", (e) => {
+  if (!state.selectedId) return;
+
+  const elData = state.elements.find((el) => el.id === state.selectedId);
   if (!elData) return;
 
-  const elementDiv = document.querySelector(
+  const elDiv = document.querySelector(
     `.canvas-element[data-id="${elData.id}"]`
   );
 
   const canvasRect = canvas.getBoundingClientRect();
 
-  let newX = e.clientX - canvasRect.left - dragOffsetX;
-  let newY = e.clientY - canvasRect.top - dragOffsetY;
+  if (isDragging) {
+    let newX = e.clientX - canvasRect.left - dragOffsetX;
+    let newY = e.clientY - canvasRect.top - dragOffsetY;
 
-  // Boundary checks
-  newX = Math.max(0, Math.min(newX, canvas.clientWidth - elData.width));
-  newY = Math.max(0, Math.min(newY, canvas.clientHeight - elData.height));
+    newX = Math.max(0, Math.min(newX, canvas.clientWidth - elData.width));
+    newY = Math.max(0, Math.min(newY, canvas.clientHeight - elData.height));
 
-  // Update state
-  elData.x = newX;
-  elData.y = newY;
+    elData.x = newX;
+    elData.y = newY;
 
-  // Update DOM
-  elementDiv.style.left = newX + "px";
-  elementDiv.style.top = newY + "px";
+    elDiv.style.left = newX + "px";
+    elDiv.style.top = newY + "px";
+  }
+
+  if (isResizing) {
+    const minSize = 30;
+    const mouseX = e.clientX - canvasRect.left;
+    const mouseY = e.clientY - canvasRect.top;
+
+    let { x, y, width, height } = elData;
+
+    if (resizeDirection.includes("r")) {
+      width = mouseX - x;
+    }
+    if (resizeDirection.includes("l")) {
+      width = width + (x - mouseX);
+      x = mouseX;
+    }
+    if (resizeDirection.includes("b")) {
+      height = mouseY - y;
+    }
+    if (resizeDirection.includes("t")) {
+      height = height + (y - mouseY);
+      y = mouseY;
+    }
+
+    width = Math.max(minSize, width);
+    height = Math.max(minSize, height);
+
+    elData.x = x;
+    elData.y = y;
+    elData.width = width;
+    elData.height = height;
+
+    elDiv.style.left = x + "px";
+    elDiv.style.top = y + "px";
+    elDiv.style.width = width + "px";
+    elDiv.style.height = height + "px";
+  }
 });
-
-
 document.addEventListener("mouseup", () => {
   isDragging = false;
+  isResizing = false;
+  resizeDirection = null;
 });
+
+
