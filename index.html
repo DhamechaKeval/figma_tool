@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Figma Style Editor</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- TOP TOOLBAR -->
+    <div id="toolbar">
+      <button id="add-rect">Add Rectangle</button>
+      <button id="add-text">Add Text</button>
+    </div>
+
+    <div id="editor">
+      <!-- LAYERS PANEL -->
+      <div id="layers-panel">
+        <h3>Layers</h3>
+        <ul id="layers-list"></ul>
+      </div>
+
+      <!-- CANVAS -->
+      <div id="canvas"></div>
+
+      <!-- PROPERTIES PANEL -->
+      <div id="properties-panel">
+        <h3>Properties</h3>
+
+        <label>
+          Width
+          <input type="number" id="prop-width" />
+        </label>
+
+        <label>
+          Height
+          <input type="number" id="prop-height" />
+        </label>
+
+        <label>
+          Background
+          <input type="color" id="prop-bg" />
+        </label>
+
+        <label id="text-prop">
+          Text
+          <input type="text" id="prop-text" />
+        </label>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
