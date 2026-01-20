@@ -19,7 +19,6 @@ const propText = document.getElementById("prop-text");
 const textPropWrapper = document.getElementById("text-prop");
 const layersList = document.getElementById("layers-list");
 
-
 // CENTRAL STATE
 const state = {
   elements: [],
@@ -126,6 +125,7 @@ addRectBtn.addEventListener("click", () => {
   state.elements.push(element);
   renderElement(element);
   renderLayers();
+  saveState();
 });
 
 addTextBtn.addEventListener("click", () => {
@@ -145,6 +145,7 @@ addTextBtn.addEventListener("click", () => {
   state.elements.push(element);
   renderElement(element);
   renderLayers();
+  saveState();
 });
 
 //helper function
@@ -231,13 +232,30 @@ function updateZIndex() {
   state.elements.forEach((el, i) => {
     el.zIndex = i + 1;
 
-    const div = document.querySelector(
-      `.canvas-element[data-id="${el.id}"]`
-    );
+    const div = document.querySelector(`.canvas-element[data-id="${el.id}"]`);
     if (div) div.style.zIndex = el.zIndex;
   });
 }
 
+function saveState() {
+  localStorage.setItem("figma-editor-state", JSON.stringify(state.elements));
+}
+
+function loadState() {
+  const data = localStorage.getItem("figma-editor-state");
+  if (!data) return;
+
+  const elements = JSON.parse(data);
+  state.elements = elements;
+
+  canvas.innerHTML = "";
+
+  elements.forEach((el) => {
+    renderElement(el);
+  });
+
+  renderLayers();
+}
 
 //Click to Canvas (DESELECT)
 canvas.addEventListener("mousedown", (e) => {
@@ -319,6 +337,7 @@ document.addEventListener("mousemove", (e) => {
     elData.rotation = deg;
     elDiv.style.transform = `rotate(${deg}deg)`;
   }
+  saveState();
 });
 
 document.addEventListener("mouseup", () => {
@@ -357,6 +376,7 @@ propWidth.addEventListener("input", () => {
 
   const div = document.querySelector(`.canvas-element[data-id="${el.id}"]`);
   div.style.width = el.width + "px";
+  saveState();
 });
 
 propHeight.addEventListener("input", () => {
@@ -367,6 +387,7 @@ propHeight.addEventListener("input", () => {
 
   const div = document.querySelector(`.canvas-element[data-id="${el.id}"]`);
   div.style.height = el.height + "px";
+  saveState();
 });
 
 propBg.addEventListener("input", () => {
@@ -377,6 +398,7 @@ propBg.addEventListener("input", () => {
 
   const div = document.querySelector(`.canvas-element[data-id="${el.id}"]`);
   div.style.background = el.background;
+  saveState();
 });
 
 propText.addEventListener("input", () => {
@@ -391,6 +413,7 @@ propText.addEventListener("input", () => {
   if (span) {
     span.textContent = el.text;
   }
+  saveState();
 });
 
 //keyboard movement and delete element
@@ -408,6 +431,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Delete") {
     div.remove();
     state.elements = state.elements.filter((item) => item.id !== el.id);
+    saveState();
     clearSelection();
     return;
   }
@@ -435,3 +459,5 @@ document.addEventListener("keydown", (e) => {
 
   e.preventDefault(); // stops page scroll
 });
+
+loadState();
