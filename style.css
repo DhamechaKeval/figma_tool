@@ -166,3 +166,8 @@ body {
 .canvas-element.selected .resize-handle {
   display: block;
 }
+
+.text-content {
+  pointer-events: none;
+  user-select: none;
+}

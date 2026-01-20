@@ -5,16 +5,21 @@ let dragOffsetY = 0;
 let isResizing = false;
 let resizeDirection = null;
 
+// DOM REFERENCES
+const canvas = document.getElementById("canvas");
+const addRectBtn = document.getElementById("add-rect");
+const addTextBtn = document.getElementById("add-text");
+const propWidth = document.getElementById("prop-width");
+const propHeight = document.getElementById("prop-height");
+const propBg = document.getElementById("prop-bg");
+const propText = document.getElementById("prop-text");
+const textPropWrapper = document.getElementById("text-prop");
+
 // CENTRAL STATE
 const state = {
   elements: [],
   selectedId: null,
 };
-
-// DOM REFERENCES
-const canvas = document.getElementById("canvas");
-const addRectBtn = document.getElementById("add-rect");
-const addTextBtn = document.getElementById("add-text");
 
 function generateId() {
   idCounter++;
@@ -47,12 +52,18 @@ function renderElement(el) {
   div.style.transform = `rotate(${el.rotation}deg)`;
 
   if (el.type === "text") {
-    div.textContent = el.text;
-    div.style.display = "flex";
-    div.style.alignItems = "center";
-    div.style.justifyContent = "center";
-    div.style.color = "#fff";
-  }
+  const span = document.createElement("span");
+  span.className = "text-content";
+  span.textContent = el.text;
+
+  div.appendChild(span);
+
+  div.style.display = "flex";
+  div.style.alignItems = "center";
+  div.style.justifyContent = "center";
+  div.style.color = "#fff";
+}
+
 
   // 🔹 RESIZE HANDLES
   ["tl", "tr", "bl", "br"].forEach((dir) => {
@@ -72,7 +83,6 @@ function renderElement(el) {
 
   canvas.appendChild(div);
 }
-
 
 addRectBtn.addEventListener("click", () => {
   const element = {
@@ -111,30 +121,36 @@ addTextBtn.addEventListener("click", () => {
 });
 
 //helper function
-
 function clearSelection() {
   const prev = document.querySelector(".canvas-element.selected");
   if (prev) prev.classList.remove("selected");
+
   state.selectedId = null;
+
+  propWidth.value = "";
+  propHeight.value = "";
+  propBg.value = "#000000";
+  propText.value = "";
+  textPropWrapper.style.display = "none";
 }
 
 function selectElement(id) {
   clearSelection();
 
-  const el = document.querySelector(`.canvas-element[data-id="${id}"]`);
-  if (!el) return;
+  const elDiv = document.querySelector(`.canvas-element[data-id="${id}"]`);
+  if (!elDiv) return;
 
-  el.classList.add("selected");
+  elDiv.classList.add("selected");
   state.selectedId = id;
+
+  updatePropertiesPanel();
 }
 
 //Click to Canvas (DESELECT)
-
 canvas.addEventListener("mousedown", (e) => {
   if (e.target !== canvas) return;
   clearSelection();
 });
-
 
 document.addEventListener("mousemove", (e) => {
   if (!state.selectedId) return;
@@ -198,10 +214,75 @@ document.addEventListener("mousemove", (e) => {
     elDiv.style.height = height + "px";
   }
 });
+
 document.addEventListener("mouseup", () => {
   isDragging = false;
   isResizing = false;
   resizeDirection = null;
 });
 
+function getSelectedElementData() {
+  return state.elements.find((el) => el.id === state.selectedId);
+}
 
+function updatePropertiesPanel() {
+  const el = getSelectedElementData();
+  if (!el) return;
+
+  propWidth.value = el.width;
+  propHeight.value = el.height;
+  propBg.value = el.background;
+
+  if (el.type === "text") {
+    textPropWrapper.style.display = "block";
+    propText.value = el.text;
+  } else {
+    textPropWrapper.style.display = "none";
+  }
+}
+
+//bind with inputs
+propWidth.addEventListener("input", () => {
+  const el = getSelectedElementData();
+  if (!el) return;
+
+  el.width = Number(propWidth.value);
+
+  const div = document.querySelector(`.canvas-element[data-id="${el.id}"]`);
+  div.style.width = el.width + "px";
+});
+
+propHeight.addEventListener("input", () => {
+  const el = getSelectedElementData();
+  if (!el) return;
+
+  el.height = Number(propHeight.value);
+
+  const div = document.querySelector(`.canvas-element[data-id="${el.id}"]`);
+  div.style.height = el.height + "px";
+});
+
+propBg.addEventListener("input", () => {
+  const el = getSelectedElementData();
+  if (!el) return;
+
+  el.background = propBg.value;
+
+  const div = document.querySelector(`.canvas-element[data-id="${el.id}"]`);
+  div.style.background = el.background;
+});
+
+propText.addEventListener("input", () => {
+  const el = getSelectedElementData();
+  if (!el || el.type !== "text") return;
+
+  el.text = propText.value;
+
+  const div = document.querySelector(`.canvas-element[data-id="${el.id}"]`);
+const span = div.querySelector(".text-content");
+
+if (span) {
+  span.textContent = el.text;
+}
+
+});
