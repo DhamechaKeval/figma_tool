@@ -7,8 +7,6 @@ let isRotating = false;
 let rotationStartAngle = 0;
 let elementStartRotation = 0;
 let snapEnabled = false;
-let zoomLevel = 1; // 1 = 100%
-
 
 // DOM REFERENCES
 const snapToggleBtn = document.getElementById("snap-toggle");
@@ -31,8 +29,6 @@ snapVLine.className = "snap-line vertical";
 snapHLine.className = "snap-line horizontal";
 canvas.appendChild(snapVLine);
 canvas.appendChild(snapHLine);
-
-
 
 // CENTRAL STATE
 const state = {
@@ -166,7 +162,6 @@ addRectBtn.addEventListener("click", () => {
     background: "#2f80ed",
     text: "",
     zIndex: state.elements.length + 1,
-    locked: false,
   };
 
   state.elements.push(element);
@@ -187,7 +182,6 @@ addTextBtn.addEventListener("click", () => {
     background: "#444",
     text: "Text",
     zIndex: state.elements.length + 1,
-    locked: false,
   };
 
   state.elements.push(element);
@@ -310,19 +304,6 @@ function loadState() {
 
 function snap(value, size = 10) {
   return Math.round(value / size) * size;
-}
-
-function applyZoom() {
-  canvas.style.transform = `scale(${zoomLevel})`;
-  canvas.style.transformOrigin = "center center";
-
-  localStorage.setItem("editor-zoom", zoomLevel);
-}
-
-const savedZoom = parseFloat(localStorage.getItem("editor-zoom"));
-if (!isNaN(savedZoom)) {
-  zoomLevel = savedZoom;
-  applyZoom();
 }
 
 //theme dark / Light
@@ -704,20 +685,5 @@ function exportHTML() {
   URL.revokeObjectURL(url);
 }
 exportHtmlBtn.addEventListener("click", exportHTML);
-
-//canvas zoom 
-canvas.addEventListener("wheel", (e) => {
-  if (!e.ctrlKey) return;
-
-  e.preventDefault();
-
-  const delta = e.deltaY > 0 ? -0.1 : 0.1;
-  zoomLevel += delta;
-
-  // limits
-  zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 2);
-
-  applyZoom();
-}, { passive: false });
 
 loadState();
