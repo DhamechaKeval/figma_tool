@@ -4,6 +4,9 @@ let dragOffsetX = 0;
 let dragOffsetY = 0;
 let isResizing = false;
 let resizeDirection = null;
+let isRotating = false;
+let rotationStartAngle = 0;
+let elementStartRotation = 0;
 
 // DOM REFERENCES
 const canvas = document.getElementById("canvas");
@@ -52,20 +55,19 @@ function renderElement(el) {
   div.style.transform = `rotate(${el.rotation}deg)`;
 
   if (el.type === "text") {
-  const span = document.createElement("span");
-  span.className = "text-content";
-  span.textContent = el.text;
+    const span = document.createElement("span");
+    span.className = "text-content";
+    span.textContent = el.text;
 
-  div.appendChild(span);
+    div.appendChild(span);
 
-  div.style.display = "flex";
-  div.style.alignItems = "center";
-  div.style.justifyContent = "center";
-  div.style.color = "#fff";
-}
+    div.style.display = "flex";
+    div.style.alignItems = "center";
+    div.style.justifyContent = "center";
+    div.style.color = "#fff";
+  }
 
-
-  // 🔹 RESIZE HANDLES
+  // resize handle
   ["tl", "tr", "bl", "br"].forEach((dir) => {
     const handle = document.createElement("div");
     handle.classList.add("resize-handle", dir);
@@ -80,6 +82,27 @@ function renderElement(el) {
 
     div.appendChild(handle);
   });
+
+  // rotate handals
+  const rotateHandle = document.createElement("div");
+  rotateHandle.classList.add("rotate-handle");
+
+  rotateHandle.addEventListener("mousedown", (e) => {
+    e.stopPropagation();
+    selectElement(el.id);
+
+    isRotating = true;
+
+    const rect = div.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    rotationStartAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+
+    elementStartRotation = el.rotation;
+  });
+
+  div.appendChild(rotateHandle);
 
   canvas.appendChild(div);
 }
@@ -213,11 +236,25 @@ document.addEventListener("mousemove", (e) => {
     elDiv.style.width = width + "px";
     elDiv.style.height = height + "px";
   }
+  if (isRotating) {
+    const rect = elDiv.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    const currentAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+
+    const delta = currentAngle - rotationStartAngle;
+    const deg = elementStartRotation + (delta * 180) / Math.PI;
+
+    elData.rotation = deg;
+    elDiv.style.transform = `rotate(${deg}deg)`;
+  }
 });
 
 document.addEventListener("mouseup", () => {
   isDragging = false;
   isResizing = false;
+  isRotating = false;
   resizeDirection = null;
 });
 
@@ -279,10 +316,9 @@ propText.addEventListener("input", () => {
   el.text = propText.value;
 
   const div = document.querySelector(`.canvas-element[data-id="${el.id}"]`);
-const span = div.querySelector(".text-content");
+  const span = div.querySelector(".text-content");
 
-if (span) {
-  span.textContent = el.text;
-}
-
+  if (span) {
+    span.textContent = el.text;
+  }
 });
