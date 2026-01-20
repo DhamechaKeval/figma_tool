@@ -8,9 +8,8 @@ This project is focused on understanding **how real design tools work internally
 🔗 **GitHub Repository**  
 👉 https://github.com/DhamechaKeval/figma_tool
 
----
-
-### ✨ Key Highlights
+🔗 **Project Live Link**  
+👉 https://figma-tool-eight.vercel.app/
 
 - Built from scratch using **Vanilla JavaScript**
 - Editor-style UI inspired by **Figma**
