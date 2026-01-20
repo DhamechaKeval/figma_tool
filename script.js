@@ -322,3 +322,46 @@ propText.addEventListener("input", () => {
     span.textContent = el.text;
   }
 });
+
+//keyboard movement and delete element
+document.addEventListener("keydown", (e) => {
+  if (!state.selectedId) return;
+
+  const el = state.elements.find((el) => el.id === state.selectedId);
+  if (!el) return;
+
+  const div = document.querySelector(`.canvas-element[data-id="${el.id}"]`);
+
+  const step = 5;
+
+  // DELETE
+  if (e.key === "Delete") {
+    div.remove();
+    state.elements = state.elements.filter((item) => item.id !== el.id);
+    clearSelection();
+    return;
+  }
+
+  // MOVE WITH ARROWS
+  switch (e.key) {
+    case "ArrowUp":
+      el.y = Math.max(0, el.y - step);
+      break;
+    case "ArrowDown":
+      el.y = Math.min(canvas.clientHeight - el.height, el.y + step);
+      break;
+    case "ArrowLeft":
+      el.x = Math.max(0, el.x - step);
+      break;
+    case "ArrowRight":
+      el.x = Math.min(canvas.clientWidth - el.width, el.x + step);
+      break;
+    default:
+      return;
+  }
+
+  div.style.left = el.x + "px";
+  div.style.top = el.y + "px";
+
+  e.preventDefault(); // stops page scroll
+});
