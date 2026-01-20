@@ -17,6 +17,8 @@ const propHeight = document.getElementById("prop-height");
 const propBg = document.getElementById("prop-bg");
 const propText = document.getElementById("prop-text");
 const textPropWrapper = document.getElementById("text-prop");
+const layersList = document.getElementById("layers-list");
+
 
 // CENTRAL STATE
 const state = {
@@ -123,6 +125,7 @@ addRectBtn.addEventListener("click", () => {
 
   state.elements.push(element);
   renderElement(element);
+  renderLayers();
 });
 
 addTextBtn.addEventListener("click", () => {
@@ -141,6 +144,7 @@ addTextBtn.addEventListener("click", () => {
 
   state.elements.push(element);
   renderElement(element);
+  renderLayers();
 });
 
 //helper function
@@ -149,6 +153,7 @@ function clearSelection() {
   if (prev) prev.classList.remove("selected");
 
   state.selectedId = null;
+  renderLayers();
 
   propWidth.value = "";
   propHeight.value = "";
@@ -165,9 +170,74 @@ function selectElement(id) {
 
   elDiv.classList.add("selected");
   state.selectedId = id;
+  renderLayers();
 
   updatePropertiesPanel();
 }
+
+function renderLayers() {
+  layersList.innerHTML = "";
+
+  state.elements.forEach((el, index) => {
+    const li = document.createElement("li");
+    li.textContent = `${el.type.toUpperCase()} (${el.id})`;
+
+    if (el.id === state.selectedId) {
+      li.classList.add("active");
+    }
+
+    li.addEventListener("click", () => {
+      selectElement(el.id);
+    });
+
+    // Move Up
+    const upBtn = document.createElement("button");
+    upBtn.textContent = "↑";
+    upBtn.style.marginLeft = "8px";
+
+    upBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      moveLayer(index, -1);
+    });
+
+    // Move Down
+    const downBtn = document.createElement("button");
+    downBtn.textContent = "↓";
+
+    downBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      moveLayer(index, 1);
+    });
+
+    li.appendChild(upBtn);
+    li.appendChild(downBtn);
+    layersList.appendChild(li);
+  });
+}
+
+function moveLayer(index, direction) {
+  const newIndex = index + direction;
+  if (newIndex < 0 || newIndex >= state.elements.length) return;
+
+  const temp = state.elements[index];
+  state.elements[index] = state.elements[newIndex];
+  state.elements[newIndex] = temp;
+
+  updateZIndex();
+  renderLayers();
+}
+
+function updateZIndex() {
+  state.elements.forEach((el, i) => {
+    el.zIndex = i + 1;
+
+    const div = document.querySelector(
+      `.canvas-element[data-id="${el.id}"]`
+    );
+    if (div) div.style.zIndex = el.zIndex;
+  });
+}
+
 
 //Click to Canvas (DESELECT)
 canvas.addEventListener("mousedown", (e) => {
