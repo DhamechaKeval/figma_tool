@@ -6,8 +6,12 @@ let resizeDirection = null;
 let isRotating = false;
 let rotationStartAngle = 0;
 let elementStartRotation = 0;
+let snapEnabled = false;
+let zoomLevel = 1; // 1 = 100%
+
 
 // DOM REFERENCES
+const snapToggleBtn = document.getElementById("snap-toggle");
 const canvas = document.getElementById("canvas");
 const addRectBtn = document.getElementById("add-rect");
 const addTextBtn = document.getElementById("add-text");
@@ -19,6 +23,16 @@ const textPropWrapper = document.getElementById("text-prop");
 const layersList = document.getElementById("layers-list");
 const exportJsonBtn = document.getElementById("export-json");
 const exportHtmlBtn = document.getElementById("export-html");
+const themeToggleBtn = document.getElementById("theme-toggle");
+const snapVLine = document.createElement("div");
+const snapHLine = document.createElement("div");
+
+snapVLine.className = "snap-line vertical";
+snapHLine.className = "snap-line horizontal";
+canvas.appendChild(snapVLine);
+canvas.appendChild(snapHLine);
+
+
 
 // CENTRAL STATE
 const state = {
@@ -152,6 +166,7 @@ addRectBtn.addEventListener("click", () => {
     background: "#2f80ed",
     text: "",
     zIndex: state.elements.length + 1,
+    locked: false,
   };
 
   state.elements.push(element);
@@ -172,6 +187,7 @@ addTextBtn.addEventListener("click", () => {
     background: "#444",
     text: "Text",
     zIndex: state.elements.length + 1,
+    locked: false,
   };
 
   state.elements.push(element);
@@ -280,22 +296,117 @@ function loadState() {
   const elements = JSON.parse(data);
   state.elements = elements;
 
-  // 🔑 FIX: sync idCounter with highest existing ID
-  let maxId = 0;
-  elements.forEach((el) => {
-    const num = parseInt(el.id.split("-")[1]);
-    if (num > maxId) maxId = num;
-  });
-  idCounter = maxId;
-
   canvas.innerHTML = "";
 
   elements.forEach((el) => {
     renderElement(el);
   });
 
+  canvas.appendChild(snapVLine);
+  canvas.appendChild(snapHLine);
+
   renderLayers();
 }
+
+function snap(value, size = 10) {
+  return Math.round(value / size) * size;
+}
+
+function applyZoom() {
+  canvas.style.transform = `scale(${zoomLevel})`;
+  canvas.style.transformOrigin = "center center";
+
+  localStorage.setItem("editor-zoom", zoomLevel);
+}
+
+const savedZoom = parseFloat(localStorage.getItem("editor-zoom"));
+if (!isNaN(savedZoom)) {
+  zoomLevel = savedZoom;
+  applyZoom();
+}
+
+//theme dark / Light
+function applyTheme(theme) {
+  if (theme === "light") {
+    document.body.classList.add("light");
+    themeToggleBtn.textContent = "☀️";
+  } else {
+    document.body.classList.remove("light");
+    themeToggleBtn.textContent = "🌙";
+  }
+}
+themeToggleBtn.addEventListener("click", () => {
+  const isLight = document.body.classList.toggle("light");
+  const theme = isLight ? "light" : "dark";
+  localStorage.setItem("editor-theme", theme);
+  applyTheme(theme);
+});
+
+//clone elements
+function duplicateSelectedElement() {
+  if (!state.selectedId) return;
+
+  const el = state.elements.find((e) => e.id === state.selectedId);
+  if (!el) return;
+
+  const newEl = {
+    ...el,
+    id: generateId(), // unique ID
+    x: el.x + 20,
+    y: el.y + 20,
+    zIndex: state.elements.length + 1,
+  };
+
+  //Canvas boundary safety
+  newEl.x = Math.min(newEl.x, canvas.clientWidth - newEl.width);
+  newEl.y = Math.min(newEl.y, canvas.clientHeight - newEl.height);
+
+  //Snap to grid (if enabled)
+  if (typeof snapEnabled !== "undefined" && snapEnabled) {
+    newEl.x = snap(newEl.x);
+    newEl.y = snap(newEl.y);
+  }
+
+  state.elements.push(newEl);
+  renderElement(newEl);
+  updateZIndex();
+  renderLayers();
+  saveState();
+
+  selectElement(newEl.id);
+}
+
+//snap
+function applySnapUI() {
+  snapToggleBtn.textContent = snapEnabled ? "Snap: ON" : "Snap: OFF";
+}
+
+snapToggleBtn.addEventListener("click", () => {
+  snapEnabled = !snapEnabled;
+  localStorage.setItem("editor-snap", snapEnabled ? "1" : "0");
+  applySnapUI();
+});
+
+function showSnapLines(x, y) {
+  snapVLine.style.left = x + "px";
+  snapHLine.style.top = y + "px";
+
+  snapVLine.style.display = "block";
+  snapHLine.style.display = "block";
+}
+
+function hideSnapLines() {
+  snapVLine.style.display = "none";
+  snapHLine.style.display = "none";
+}
+
+// load saved snap
+snapEnabled = localStorage.getItem("editor-snap") === "1";
+applySnapUI();
+
+// load saved theme
+const savedTheme = localStorage.getItem("editor-theme") || "dark";
+applyTheme(savedTheme);
 
 //Click to Canvas (DESELECT)
 canvas.addEventListener("mousedown", (e) => {
@@ -319,8 +430,17 @@ document.addEventListener("mousemove", (e) => {
     let newX = e.clientX - canvasRect.left - dragOffsetX;
     let newY = e.clientY - canvasRect.top - dragOffsetY;
 
+    // boundary
     newX = Math.max(0, Math.min(newX, canvas.clientWidth - elData.width));
     newY = Math.max(0, Math.min(newY, canvas.clientHeight - elData.height));
+
+    if (snapEnabled) {
+      newX = snap(newX);
+      newY = snap(newY);
+      showSnapLines(newX, newY);
+    } else {
+      hideSnapLines();
+    }
 
     elData.x = newX;
     elData.y = newY;
@@ -385,6 +505,7 @@ document.addEventListener("mouseup", () => {
   isResizing = false;
   isRotating = false;
   resizeDirection = null;
+  hideSnapLines();
 });
 
 function getSelectedElementData() {
@@ -458,6 +579,14 @@ propText.addEventListener("input", () => {
 
 //keyboard movement and delete element
 document.addEventListener("keydown", (e) => {
+  //CTRL / CMD + D → DUPLICATE (INTERCEPT FIRST)
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d") {
+    e.preventDefault(); // stop browser bookmark
+    duplicateSelectedElement(); // safe even if nothing selected
+    return;
+  }
+
+  // baaki shortcuts sirf jab element selected ho
   if (!state.selectedId) return;
 
   const el = state.elements.find((el) => el.id === state.selectedId);
@@ -467,7 +596,7 @@ document.addEventListener("keydown", (e) => {
 
   const step = 5;
 
-  // DELETE
+  //DELETE
   if (e.key === "Delete") {
     div.remove();
     state.elements = state.elements.filter((item) => item.id !== el.id);
@@ -476,7 +605,7 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
-  // MOVE WITH ARROWS
+  //ARROW MOVE
   switch (e.key) {
     case "ArrowUp":
       el.y = Math.max(0, el.y - step);
@@ -494,10 +623,17 @@ document.addEventListener("keydown", (e) => {
       return;
   }
 
+  //Snap to grid (optional)
+  if (typeof snapEnabled !== "undefined" && snapEnabled) {
+    el.x = snap(el.x);
+    el.y = snap(el.y);
+  }
+
   div.style.left = el.x + "px";
   div.style.top = el.y + "px";
 
-  e.preventDefault(); // stops page scroll
+  saveState();
+  e.preventDefault(); //stop page scroll
 });
 
 //export json and html
@@ -568,5 +704,20 @@ function exportHTML() {
   URL.revokeObjectURL(url);
 }
 exportHtmlBtn.addEventListener("click", exportHTML);
+
+//canvas zoom 
+canvas.addEventListener("wheel", (e) => {
+  if (!e.ctrlKey) return;
+
+  e.preventDefault();
+
+  const delta = e.deltaY > 0 ? -0.1 : 0.1;
+  zoomLevel += delta;
+
+  // limits
+  zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 2);
+
+  applyZoom();
+}, { passive: false });
 
 loadState();
