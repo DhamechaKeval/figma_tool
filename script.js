@@ -1,4 +1,3 @@
-let idCounter = 0;
 let isDragging = false;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
@@ -28,8 +27,16 @@ const state = {
 };
 
 function generateId() {
-  idCounter++;
-  return "el-" + idCounter;
+  const usedIds = state.elements.map((el) => {
+    return parseInt(el.id.split("-")[1]);
+  });
+
+  let newId = 1;
+  while (usedIds.includes(newId)) {
+    newId++;
+  }
+
+  return "el-" + newId;
 }
 
 function renderElement(el) {
@@ -61,6 +68,29 @@ function renderElement(el) {
     const span = document.createElement("span");
     span.className = "text-content";
     span.textContent = el.text;
+
+    //DOUBLE CLICK TO EDIT
+    span.addEventListener("dblclick", (e) => {
+      e.stopPropagation(); // drag/resize block
+      span.contentEditable = "true";
+      span.focus();
+    });
+
+    //SAVE ON BLUR
+    span.addEventListener("blur", () => {
+      span.contentEditable = "false";
+      el.text = span.textContent;
+      saveState();
+      updatePropertiesPanel();
+    });
+
+    //SAVE ON ENTER
+    span.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        span.blur();
+      }
+    });
 
     div.appendChild(span);
 
@@ -252,7 +282,7 @@ function loadState() {
 
   // 🔑 FIX: sync idCounter with highest existing ID
   let maxId = 0;
-  elements.forEach(el => {
+  elements.forEach((el) => {
     const num = parseInt(el.id.split("-")[1]);
     if (num > maxId) maxId = num;
   });

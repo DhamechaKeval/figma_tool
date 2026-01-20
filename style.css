@@ -176,9 +176,15 @@ body {
 }
 
 .text-content {
-  pointer-events: none;
-  user-select: none;
+  pointer-events: auto;
+  user-select: text;
+  outline: none;
 }
+
+.text-content[contenteditable="true"] {
+  cursor: text;
+}
+
 
 .rotate-handle {
   width: 12px;
