@@ -18,6 +18,8 @@ const propBg = document.getElementById("prop-bg");
 const propText = document.getElementById("prop-text");
 const textPropWrapper = document.getElementById("text-prop");
 const layersList = document.getElementById("layers-list");
+const exportJsonBtn = document.getElementById("export-json");
+const exportHtmlBtn = document.getElementById("export-html");
 
 // CENTRAL STATE
 const state = {
@@ -248,6 +250,14 @@ function loadState() {
   const elements = JSON.parse(data);
   state.elements = elements;
 
+  // 🔑 FIX: sync idCounter with highest existing ID
+  let maxId = 0;
+  elements.forEach(el => {
+    const num = parseInt(el.id.split("-")[1]);
+    if (num > maxId) maxId = num;
+  });
+  idCounter = maxId;
+
   canvas.innerHTML = "";
 
   elements.forEach((el) => {
@@ -459,5 +469,74 @@ document.addEventListener("keydown", (e) => {
 
   e.preventDefault(); // stops page scroll
 });
+
+//export json and html
+function exportJSON() {
+  const dataStr = JSON.stringify(state.elements, null, 2);
+  const blob = new Blob([dataStr], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "design.json";
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+exportJsonBtn.addEventListener("click", exportJSON);
+
+function exportHTML() {
+  let html = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Exported Design</title>
+</head>
+<body style="margin:0;">
+<div style="
+  position: relative;
+  width: ${canvas.clientWidth}px;
+  height: ${canvas.clientHeight}px;
+">
+`;
+
+  state.elements.forEach((el) => {
+    html += `
+  <div style="
+    position: absolute;
+    left: ${el.x}px;
+    top: ${el.y}px;
+    width: ${el.width}px;
+    height: ${el.height}px;
+    background: ${el.background};
+    transform: rotate(${el.rotation}deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+  ">
+    ${el.type === "text" ? el.text : ""}
+  </div>
+`;
+  });
+
+  html += `
+</div>
+</body>
+</html>
+`;
+
+  const blob = new Blob([html], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "design.html";
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+exportHtmlBtn.addEventListener("click", exportHTML);
 
 loadState();

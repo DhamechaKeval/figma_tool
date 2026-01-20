@@ -18,9 +18,17 @@ body {
   height: 48px;
   display: flex;
   align-items: center;
+  justify-content: space-between; /* 🔑 key line */
   padding: 0 14px;
   background: #15151c;
   border-bottom: 1px solid #2a2a35;
+}
+
+.toolbar-left,
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 #toolbar button {
