@@ -285,7 +285,7 @@ body.light #layers-list::-webkit-scrollbar-thumb {
 #shortcuts-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0, 0, 0, 0.6);
   display: none;
   align-items: center;
   justify-content: center;
@@ -298,7 +298,7 @@ body.light #layers-list::-webkit-scrollbar-thumb {
   border-radius: 12px;
   padding: 20px 24px;
   width: 360px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
 }
 
 .shortcuts-box h3 {
@@ -331,4 +331,94 @@ body.light #layers-list::-webkit-scrollbar-thumb {
   color: white;
   border-radius: 6px;
   cursor: pointer;
+}
+
+#shape-toolbar {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 6px;
+  display: flex;
+  gap: 6px;
+  z-index: 9999;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+#shape-toolbar button {
+  width: 36px;
+  height: 36px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+#shape-toolbar button:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.canvas-element[data-type="circle"] {
+  border-radius: 50%;
+}
+
+.canvas-element.triangle {
+  width: 0 !important;
+  height: 0 !important;
+  border-left: 40px solid transparent;
+  border-right: 40px solid transparent;
+  border-bottom: 70px solid var(--primary);
+  background: transparent !important;
+}
+
+#logo {
+  text-align: center;
+  font-weight: 900;
+  font-size: 1.25rem;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.modal-content {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 20px;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-content h3 {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.modal-content button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: var(--primary);
+  color: white;
+}
+
+.modal-content button.secondary {
+  background: var(--bg-input);
+  color: var(--text-main);
 }

@@ -11,8 +11,7 @@ let snapEnabled = false;
 // DOM REFERENCES
 const snapToggleBtn = document.getElementById("snap-toggle");
 const canvas = document.getElementById("canvas");
-const addRectBtn = document.getElementById("add-rect");
-const addTextBtn = document.getElementById("add-text");
+const shapeToolbar = document.getElementById("shape-toolbar");
 const propWidth = document.getElementById("prop-width");
 const propHeight = document.getElementById("prop-height");
 const propBg = document.getElementById("prop-bg");
@@ -27,6 +26,9 @@ const snapHLine = document.createElement("div");
 const shortcutsBtn = document.getElementById("shortcuts-btn");
 const shortcutsModal = document.getElementById("shortcuts-modal");
 const closeShortcutsBtn = document.getElementById("close-shortcuts");
+const exportBtn = document.getElementById("export-btn");
+const exportModal = document.getElementById("export-modal");
+const exportCloseBtn = document.getElementById("export-close");
 
 snapVLine.className = "snap-line vertical";
 snapHLine.className = "snap-line horizontal";
@@ -76,6 +78,16 @@ function renderElement(el) {
   div.style.background = el.background;
   div.style.zIndex = el.zIndex;
   div.style.transform = `rotate(${el.rotation}deg)`;
+  if (el.type === "triangle") {
+    const color =
+      el.background && el.background !== "transparent"
+        ? el.background
+        : "#e74c3c";
+
+    div.style.borderLeftColor = "transparent";
+    div.style.borderRightColor = "transparent";
+    div.style.borderBottomColor = color;
+  }
 
   if (el.type === "text") {
     const span = document.createElement("span");
@@ -114,20 +126,33 @@ function renderElement(el) {
   }
 
   // resize handle
-  ["tl", "tr", "bl", "br"].forEach((dir) => {
+  if (el.type === "triangle") {
     const handle = document.createElement("div");
-    handle.classList.add("resize-handle", dir);
+    handle.classList.add("resize-handle", "br");
 
     handle.addEventListener("mousedown", (e) => {
       e.stopPropagation();
       selectElement(el.id);
-
       isResizing = true;
-      resizeDirection = dir;
+      resizeDirection = "triangle";
     });
 
     div.appendChild(handle);
-  });
+  } else {
+    ["tl", "tr", "bl", "br"].forEach((dir) => {
+      const handle = document.createElement("div");
+      handle.classList.add("resize-handle", dir);
+
+      handle.addEventListener("mousedown", (e) => {
+        e.stopPropagation();
+        selectElement(el.id);
+        isResizing = true;
+        resizeDirection = dir;
+      });
+
+      div.appendChild(handle);
+    });
+  }
 
   // rotate handals
   const rotateHandle = document.createElement("div");
@@ -150,48 +175,89 @@ function renderElement(el) {
 
   div.appendChild(rotateHandle);
 
+  div.dataset.type = el.type;
+
+  if (el.type === "circle") {
+    div.style.borderRadius = "50%";
+  }
+
+  if (el.type === "triangle") {
+    div.classList.add("triangle");
+  }
+
   canvas.appendChild(div);
 }
 
-addRectBtn.addEventListener("click", () => {
-  const element = {
+shapeToolbar.addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+
+  const shape = btn.dataset.shape;
+  addShape(shape);
+});
+
+function addShape(type) {
+  const base = {
     id: generateId(),
-    type: "rect",
-    x: 80,
-    y: 80,
-    width: 120,
-    height: 80,
+    x: Math.max(40, canvas.clientWidth / 2 - 60),
+    y: Math.max(40, canvas.clientHeight / 2 - 40),
+
     rotation: 0,
-    background: "#2f80ed",
-    text: "",
     zIndex: state.elements.length + 1,
   };
+
+  let element;
+
+  if (type === "rect") {
+    element = {
+      ...base,
+      type: "rect",
+      width: 120,
+      height: 80,
+      background: "#2f80ed",
+      text: "",
+    };
+  }
+
+  if (type === "circle") {
+    element = {
+      ...base,
+      type: "circle",
+      width: 80,
+      height: 80,
+      background: "#27ae60",
+      text: "",
+    };
+  }
+
+  if (type === "triangle") {
+    element = {
+      ...base,
+      type: "triangle",
+      width: 80,
+      height: 70,
+      background: "#e74c3c",
+      text: "",
+    };
+  }
+
+  if (type === "text") {
+    element = {
+      ...base,
+      type: "text",
+      width: 200,
+      height: 50,
+      background: "#444",
+      text: "double_click_for_input",
+    };
+  }
 
   state.elements.push(element);
   renderElement(element);
   renderLayers();
   saveState();
-});
-
-addTextBtn.addEventListener("click", () => {
-  const element = {
-    id: generateId(),
-    type: "text",
-    x: 100,
-    y: 100,
-    width: 140,
-    height: 50,
-    rotation: 0,
-    background: "#444",
-    text: "Text",
-    zIndex: state.elements.length + 1,
-  };
-
-  state.elements.push(element);
-  renderElement(element);
-  renderLayers();
-  saveState();
-});
+  selectElement(element.id);
+}
 
 //helper function
 function clearSelection() {
@@ -226,7 +292,7 @@ function renderLayers() {
 
   state.elements.forEach((el, index) => {
     const li = document.createElement("li");
-    li.textContent = `${el.type.toUpperCase()} (${el.id})`;
+    li.textContent = `${el.type.toUpperCase()}`;
 
     if (el.id === state.selectedId) {
       li.classList.add("active");
@@ -410,6 +476,23 @@ document.addEventListener("mousemove", (e) => {
 
   const canvasRect = canvas.getBoundingClientRect();
 
+  if (isResizing && elData.type === "triangle") {
+    const mouseX = e.clientX - canvasRect.left;
+    const mouseY = e.clientY - canvasRect.top;
+
+    const newWidth = Math.max(30, mouseX - elData.x);
+    const newHeight = Math.max(30, mouseY - elData.y);
+
+    elData.width = newWidth;
+    elData.height = newHeight;
+
+    elDiv.style.borderLeftWidth = newWidth / 2 + "px";
+    elDiv.style.borderRightWidth = newWidth / 2 + "px";
+    elDiv.style.borderBottomWidth = newHeight + "px";
+
+    return; // 👈 VERY IMPORTANT
+  }
+
   if (isDragging) {
     let newX = e.clientX - canvasRect.left - dragOffsetX;
     let newY = e.clientY - canvasRect.top - dragOffsetY;
@@ -542,7 +625,13 @@ propBg.addEventListener("input", () => {
   el.background = propBg.value;
 
   const div = document.querySelector(`.canvas-element[data-id="${el.id}"]`);
-  div.style.background = el.background;
+
+  if (el.type === "triangle") {
+    div.style.borderBottomColor = el.background;
+  } else {
+    div.style.background = el.background;
+  }
+
   saveState();
 });
 
@@ -563,14 +652,6 @@ propText.addEventListener("input", () => {
 
 //keyboard movement and delete element
 document.addEventListener("keydown", (e) => {
-  //CTRL / CMD + D → DUPLICATE (INTERCEPT FIRST)
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d") {
-    e.preventDefault(); // stop browser bookmark
-    duplicateSelectedElement(); // safe even if nothing selected
-    return;
-  }
-
-  // baaki shortcuts sirf jab element selected ho
   if (!state.selectedId) return;
 
   const el = state.elements.find((el) => el.id === state.selectedId);
@@ -580,44 +661,62 @@ document.addEventListener("keydown", (e) => {
 
   const step = 5;
 
-  //DELETE
-  if (e.key === "Delete") {
-    div.remove();
-    state.elements = state.elements.filter((item) => item.id !== el.id);
+  // 🔥 CTRL / CMD + D → DUPLICATE
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d") {
+    e.preventDefault();
+
+    const newEl = {
+      ...el,
+      id: generateId(),
+      x: el.x + 20,
+      y: el.y + 20,
+      zIndex: state.elements.length + 1,
+    };
+
+    state.elements.push(newEl);
+    renderElement(newEl);
+    renderLayers();
+    selectElement(newEl.id);
     saveState();
-    clearSelection();
     return;
   }
 
-  //ARROW MOVE
+  // 🗑 DELETE
+  if (e.key === "Delete") {
+    div.remove();
+    state.elements = state.elements.filter((item) => item.id !== el.id);
+    clearSelection();
+    saveState();
+    return;
+  }
+
+  // ⬆⬇⬅➡ MOVE WITH ARROWS
   switch (e.key) {
     case "ArrowUp":
       el.y = Math.max(0, el.y - step);
       break;
+
     case "ArrowDown":
       el.y = Math.min(canvas.clientHeight - el.height, el.y + step);
       break;
+
     case "ArrowLeft":
       el.x = Math.max(0, el.x - step);
       break;
+
     case "ArrowRight":
       el.x = Math.min(canvas.clientWidth - el.width, el.x + step);
       break;
+
     default:
       return;
-  }
-
-  //Snap to grid (optional)
-  if (typeof snapEnabled !== "undefined" && snapEnabled) {
-    el.x = snap(el.x);
-    el.y = snap(el.y);
   }
 
   div.style.left = el.x + "px";
   div.style.top = el.y + "px";
 
   saveState();
-  e.preventDefault(); //stop page scroll
+  e.preventDefault(); // stop page scroll
 });
 
 //export json and html
@@ -642,33 +741,86 @@ function exportHTML() {
 <head>
 <meta charset="UTF-8">
 <title>Exported Design</title>
+<style>
+  body { margin: 0; background: #111; }
+  .canvas {
+    position: relative;
+    width: ${canvas.clientWidth}px;
+    height: ${canvas.clientHeight}px;
+  }
+  .rect {
+    position: absolute;
+  }
+  .circle {
+    position: absolute;
+    border-radius: 50%;
+  }
+  .triangle {
+    position: absolute;
+    width: 0;
+    height: 0;
+  }
+</style>
 </head>
-<body style="margin:0;">
-<div style="
-  position: relative;
-  width: ${canvas.clientWidth}px;
-  height: ${canvas.clientHeight}px;
-">
+<body>
+<div class="canvas">
 `;
 
   state.elements.forEach((el) => {
-    html += `
-  <div style="
-    position: absolute;
-    left: ${el.x}px;
-    top: ${el.y}px;
-    width: ${el.width}px;
-    height: ${el.height}px;
-    background: ${el.background};
-    transform: rotate(${el.rotation}deg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-  ">
-    ${el.type === "text" ? el.text : ""}
-  </div>
-`;
+    if (el.type === "rect") {
+      html += `
+<div class="rect" style="
+  left:${el.x}px;
+  top:${el.y}px;
+  width:${el.width}px;
+  height:${el.height}px;
+  background:${el.background};
+  transform: rotate(${el.rotation}deg);
+"></div>`;
+    }
+
+    if (el.type === "circle") {
+      html += `
+<div class="circle" style="
+  left:${el.x}px;
+  top:${el.y}px;
+  width:${el.width}px;
+  height:${el.height}px;
+  background:${el.background};
+  transform: rotate(${el.rotation}deg);
+"></div>`;
+    }
+
+    if (el.type === "triangle") {
+      html += `
+<div class="triangle" style="
+  left:${el.x}px;
+  top:${el.y}px;
+  border-left:${el.width / 2}px solid transparent;
+  border-right:${el.width / 2}px solid transparent;
+  border-bottom:${el.height}px solid ${el.background};
+  transform: rotate(${el.rotation}deg);
+"></div>`;
+    }
+
+    if (el.type === "text") {
+      html += `
+<div style="
+  position:absolute;
+  left:${el.x}px;
+  top:${el.y}px;
+  width:${el.width}px;
+  height:${el.height}px;
+  background:${el.background};
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transform: rotate(${el.rotation}deg);
+">
+${el.text}
+</div>`;
+    }
   });
 
   html += `
@@ -687,6 +839,7 @@ function exportHTML() {
 
   URL.revokeObjectURL(url);
 }
+
 exportHtmlBtn.addEventListener("click", exportHTML);
 
 loadState();
@@ -704,3 +857,21 @@ shortcutsModal.addEventListener("click", (e) => {
     shortcutsModal.style.display = "none";
   }
 });
+
+exportBtn.addEventListener("click", () => {
+  exportModal.style.display = "flex";
+});
+
+exportCloseBtn.addEventListener("click", () => {
+  exportModal.style.display = "none";
+});
+
+// bahar click pe close
+exportModal.addEventListener("click", (e) => {
+  if (e.target === exportModal) {
+    exportModal.style.display = "none";
+  }
+});
+
+exportJsonBtn.addEventListener("click", exportJSON);
+exportHtmlBtn.addEventListener("click", exportHTML);

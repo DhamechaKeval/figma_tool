@@ -13,16 +13,21 @@
     <!-- TOP TOOLBAR -->
     <div id="toolbar">
       <div class="toolbar-left">
-        <button id="add-rect">Add Rectangle</button>
-        <button id="add-text">Add Text</button>
+        <div id="logo">🎨 Figma Editor</div>
       </div>
       <div class="toolbar-right">
-        <button id="export-json">Export JSON</button>
-        <button id="export-html">Export HTML</button>
         <button id="theme-toggle">🌙</button>
         <button id="snap-toggle">Snap: OFF</button>
         <button id="shortcuts-btn">⌨ Shortcuts</button>
+        <button id="export-btn">Export</button>
+
       </div>
+    </div>
+    <div id="shape-toolbar">
+      <button data-shape="rect" title="Rectangle">▭</button>
+      <button data-shape="circle" title="Circle">◯</button>
+      <button data-shape="triangle" title="Triangle">▲</button>
+      <button data-shape="text" title="Text">T</button>
     </div>
 
     <div id="editor">
@@ -60,6 +65,17 @@
         </label>
       </div>
     </div>
+    <div id="export-modal" class="modal">
+      <div class="modal-content">
+        <h3>Export Design</h3>
+
+        <button id="export-json">Export as JSON</button>
+        <button id="export-html">Export as HTML</button>
+
+        <button class="secondary" id="export-close">Close</button>
+      </div>
+    </div>
+
     <div id="shortcuts-modal">
       <div class="shortcuts-box">
         <h3>Keyboard Shortcuts</h3>
