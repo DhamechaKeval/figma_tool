@@ -378,9 +378,13 @@ body.light #layers-list::-webkit-scrollbar-thumb {
 }
 
 #logo {
-  text-align: center;
+  display: flex;
+  align-items: center;
+}
+
+#logo h1 {
+  font-size: 1.5rem;
   font-weight: 900;
-  font-size: 1.25rem;
 }
 
 .modal {
@@ -421,4 +425,9 @@ body.light #layers-list::-webkit-scrollbar-thumb {
 .modal-content button.secondary {
   background: var(--bg-input);
   color: var(--text-main);
+}
+
+img {
+  height: 35px;
+  width: 35px;
 }
