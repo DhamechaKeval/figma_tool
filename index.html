@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -21,6 +21,7 @@
         <button id="export-html">Export HTML</button>
         <button id="theme-toggle">🌙</button>
         <button id="snap-toggle">Snap: OFF</button>
+        <button id="shortcuts-btn">⌨ Shortcuts</button>
       </div>
     </div>
 
@@ -57,6 +58,22 @@
           Text
           <input type="text" id="prop-text" />
         </label>
+      </div>
+    </div>
+    <div id="shortcuts-modal">
+      <div class="shortcuts-box">
+        <h3>Keyboard Shortcuts</h3>
+
+        <ul>
+          <li><b>Delete</b>Delete selected element</li>
+          <li><b>Arrow Keys</b>Move element</li>
+          <li><b>Ctrl / Cmd + D</b>Duplicate element</li>
+          <li><b>Selecte Element</b>Click on element</li>
+          <li><b>Mouse Drag</b>Move element</li>
+          <li><b>Double Click Text</b>Edit text</li>
+        </ul>
+
+        <button id="close-shortcuts">Close</button>
       </div>
     </div>
 

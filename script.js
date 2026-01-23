@@ -24,6 +24,9 @@ const exportHtmlBtn = document.getElementById("export-html");
 const themeToggleBtn = document.getElementById("theme-toggle");
 const snapVLine = document.createElement("div");
 const snapHLine = document.createElement("div");
+const shortcutsBtn = document.getElementById("shortcuts-btn");
+const shortcutsModal = document.getElementById("shortcuts-modal");
+const closeShortcutsBtn = document.getElementById("close-shortcuts");
 
 snapVLine.className = "snap-line vertical";
 snapHLine.className = "snap-line horizontal";
@@ -402,7 +405,7 @@ document.addEventListener("mousemove", (e) => {
   if (!elData) return;
 
   const elDiv = document.querySelector(
-    `.canvas-element[data-id="${elData.id}"]`
+    `.canvas-element[data-id="${elData.id}"]`,
   );
 
   const canvasRect = canvas.getBoundingClientRect();
@@ -687,3 +690,17 @@ function exportHTML() {
 exportHtmlBtn.addEventListener("click", exportHTML);
 
 loadState();
+
+shortcutsBtn.addEventListener("click", () => {
+  shortcutsModal.style.display = "flex";
+});
+
+closeShortcutsBtn.addEventListener("click", () => {
+  shortcutsModal.style.display = "none";
+});
+
+shortcutsModal.addEventListener("click", (e) => {
+  if (e.target === shortcutsModal) {
+    shortcutsModal.style.display = "none";
+  }
+});
