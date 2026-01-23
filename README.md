@@ -134,8 +134,10 @@ Follow these simple steps to use the Figma Style Editor:
 
 2️⃣ **Add Elements**
 
-- **Add Rectangle** par click karo → rectangle element canvas par add hoga
-- **Add Text** par click karo → text element canvas par add hoga
+- **▭** par click karo → rectangle element canvas par add hoga
+- **◯** par click karo → Circle element canvas par add hoga
+- **▲** par click karo → Triangle element canvas par add hoga
+- **T** par click karo → text element canvas par add hoga
 - New elements automatically **Layers Panel** me show honge
 
 3️⃣ **Select & Move**
@@ -180,8 +182,8 @@ Follow these simple steps to use the Figma Style Editor:
 
 1️⃣0️⃣ **Export Your Design**
 
-- **Export JSON** → design data Download in JSON formate
-- **Export HTML** → final layout html file Genrate
+- **Export as JSON** → design data Download in JSON formate
+- **Export asw HTML** → final layout html file Genrate
 
 1️⃣1️⃣ **Auto Save**
 
